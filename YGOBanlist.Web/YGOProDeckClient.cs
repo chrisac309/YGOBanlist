@@ -36,22 +36,64 @@ public class YGOProDeckClient(HttpClient httpClient)
             currentParsedDeck = ParseDeck(deckInfo.side_deck);
             AddToDictionary(currentParsedDeck);
         }
-
-
-        var sortedCardCounts = _cardCounts.OrderByDescending(kvp => kvp.Value).Select(kvp => (kvp.Key, kvp.Value));
-
+        
         HttpClient dbYgoClient = new HttpClient
         {
             BaseAddress = new Uri("https://db.ygoprodeck.com")
         };
 
-        // Remove staples
+        // banlist - Filter the cards by banlist (TCG, OCG, Goat).
+        var currentBanlistCards = (await dbYgoClient.GetFromJsonAsync<Root>($"/api/v7/cardinfo.php?banlist=TCG")).data;
+
         // https://db.ygoprodeck.com/api/v7/cardinfo.php?staple=yes
         var staples = (await dbYgoClient.GetFromJsonAsync<Root>($"/api/v7/cardinfo.php?staple=yes")).data;
 
+        // Remove current banlist cards from sorted set
+        var sortedCardCounts = _cardCounts.Where(cc => !currentBanlistCards.Any(cbc => cbc.id == cc.Key)).OrderByDescending(kvp => kvp.Value).Select(kvp => (kvp.Key, kvp.Value));
+
+        // We'll rate staples differently
+        var staplesInParsedData = sortedCardCounts.Where(scc => staples.Any(s => s.id == scc.Key) == true);
+
+        // Remove staples
         sortedCardCounts = sortedCardCounts.Where(scc => staples.Any(s => s.id == scc.Key) == false);
 
+        var nonStaplesCardInfo = await GetCardInfo(dbYgoClient, sortedCardCounts);
+        var staplesCardInfo = await GetCardInfo(dbYgoClient, staplesInParsedData);
+        
+        var maxValue = (double)sortedCardCounts.First().Value;
+        var result = new List<CardPower>();
+        foreach (var (Key, Value) in sortedCardCounts)
+        {
+            var powerlevel = (int)Math.Min(100, Value / maxValue * 100);
+            var cardName = nonStaplesCardInfo.FirstOrDefault(ci => ci.id == Key)?.name ?? "Unknown card";
+            var status = GetStatusBasedOnPowerLevel(powerlevel);
+            if (status != "UNLIMITED")
+            {
+                result.Add(new CardPower(cardName, Value, powerlevel, status));
+            }
+        }
 
+        var staplesMaxValue = (double) staplesInParsedData.First().Value;
+        foreach (var (Key, Value) in staplesInParsedData)
+        {
+            var powerlevel = (int)Math.Min(100, Value / staplesMaxValue * 100);
+            var cardName = staplesCardInfo.FirstOrDefault(ci => ci.id == Key)?.name ?? "Unknown card";
+            var status = GetStapleStatusBasedOnPowerLevel(powerlevel);
+            if (status != "UNLIMITED")
+            {
+                result.Add(new CardPower(cardName, Value, powerlevel, status + "*"));
+            }
+        }
+
+        return result
+            .GroupBy(item => item.name)
+            .Select(group => group.OrderByDescending(item => item.count).First())
+            .OrderBy(t => t.status)
+            .ThenBy(t => t.name);
+    }
+
+    private static async Task<IEnumerable<Datum>> GetCardInfo(HttpClient dbYgoClient, IEnumerable<(int Key, int Value)> sortedCardCounts)
+    {
         // Use subset of ids since the request is otherwise too large
         var allCardInfo = Enumerable.Empty<Datum>();
         foreach (var chunk in IterateInChunks<(int, int)>(sortedCardCounts, 50))
@@ -61,16 +103,7 @@ public class YGOProDeckClient(HttpClient httpClient)
             Thread.Sleep(5);
         }
 
-        var maxValue = sortedCardCounts.Take(10).Sum((input) => input.Value) / 10.0;
-        var result = new List<CardPower>();
-        foreach (var card in sortedCardCounts)
-        {
-            var powerlevel = (int)Math.Min(100, card.Value / maxValue * 100);
-            var cardName = allCardInfo.FirstOrDefault(ci => ci.id == card.Key)?.name ?? "Unknown card";
-            result.Add(new CardPower(cardName, card.Value, powerlevel, GetStatusBasedOnPowerLevel(powerlevel)));
-        }
-
-        return result;
+        return allCardInfo;
     }
 
     static IEnumerable<IEnumerable<T>> IterateInChunks<T>(IEnumerable<T> collection, int chunkSize)
@@ -90,17 +123,34 @@ public class YGOProDeckClient(HttpClient httpClient)
         } while (--chunkSize > 0 && enumerator.MoveNext());
     }
 
-    private string GetStatusBasedOnPowerLevel(int powerlevel)
+    private string GetStapleStatusBasedOnPowerLevel(int powerlevel)
     {
-        if (powerlevel > 50)
+        if (powerlevel >= 90)
         {
             return "BANNED";
         }
-        if (powerlevel > 30)
+        if (powerlevel >= 45)
         {
             return "LIMITED";
         }
-        if (powerlevel > 10)
+        if (powerlevel >= 30)
+        {
+            return "SEMI-LIMITED";
+        }
+        return "UNLIMITED";
+    }
+
+    private string GetStatusBasedOnPowerLevel(int powerlevel)
+    {
+        if (powerlevel >= 30)
+        {
+            return "BANNED";
+        }
+        if (powerlevel >= 15)
+        {
+            return "LIMITED";
+        }
+        if (powerlevel >= 10)
         {
             return "SEMI-LIMITED";
         }
