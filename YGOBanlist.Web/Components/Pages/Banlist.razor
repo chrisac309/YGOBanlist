@@ -1,0 +1,47 @@
+﻿@page "/banlist"
+@attribute [StreamRendering(true)]
+@attribute [OutputCache(Duration = 5)]
+
+@inject YGOProDeckClient YGOProAPI
+
+<PageTitle>Powerlevel Banlist</PageTitle>
+
+<h1>Card powerlevels</h1>
+
+<p>This banlist takes the last 1000 decks from the past year to determine a supplemental banlist.</p>
+
+@if (powerlevelCards == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Card name</th>
+                <th>Power Level</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var card in powerlevelCards)
+            {
+                <tr>
+                    <td>@card.name</td>
+                    <td>@card.power</td>
+                    <td>@card.status</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private IEnumerable<CardPower>? powerlevelCards;
+
+    protected override async Task OnInitializedAsync()
+    {
+        powerlevelCards = await YGOProAPI.GetCardPowerFromPastYear();
+    }
+}
