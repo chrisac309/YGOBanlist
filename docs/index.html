@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>YGO Banlist - Power Level Rankings</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
+        integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN"
+        crossorigin="anonymous" />
+    <link rel="stylesheet" href="css/style.css" />
+    <link rel="icon" type="image/png" href="favicon.png" />
+</head>
+
+<body>
+    <div class="page">
+        <div class="sidebar">
+            <div class="top-row ps-3 navbar navbar-dark">
+                <div class="container-fluid">
+                    <a class="navbar-brand" href="#">YGOBanlist</a>
+                </div>
+            </div>
+            <input type="checkbox" title="Navigation menu" class="navbar-toggler" id="nav-toggle" />
+            <div class="nav-scrollable" id="nav-menu">
+                <nav class="flex-column">
+                    <div class="nav-item px-3">
+                        <a class="nav-link active" href="#" data-page="home">
+                            <span class="bi bi-house-door-fill" aria-hidden="true"></span> Home
+                        </a>
+                    </div>
+                    <div class="nav-item px-3">
+                        <a class="nav-link" href="#banlist" data-page="banlist">
+                            <span class="bi bi-list-nested" aria-hidden="true"></span> Banlist
+                        </a>
+                    </div>
+                </nav>
+            </div>
+        </div>
+
+        <main>
+            <article class="content px-4">
+                <!-- Home Page -->
+                <div id="page-home">
+                    <h1>Hello, world!</h1>
+                    <p>Welcome to the YGO Banlist app. This tool analyzes the last 1000 tournament meta decks from
+                        the past year to calculate supplemental power-level-based ban recommendations.</p>
+                    <p>Click <a href="#banlist" data-page="banlist">Banlist</a> in the sidebar to view the results.</p>
+                </div>
+
+                <!-- Banlist Page -->
+                <div id="page-banlist" style="display: none;">
+                    <h1>Card Power Levels</h1>
+                    <p>This banlist takes the last 1000 decks from the past year to determine a supplemental banlist.</p>
+
+                    <div id="loading">
+                        <div class="d-flex align-items-center">
+                            <div class="spinner-border text-primary me-3" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <div>
+                                <em id="loading-text">Loading deck data...</em>
+                                <div class="progress mt-2" style="width: 300px;">
+                                    <div id="progress-bar" class="progress-bar" role="progressbar" style="width: 0%"
+                                        aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">0%</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="error-display" class="alert alert-danger" style="display: none;"></div>
+
+                    <div id="results" style="display: none;">
+                        <div class="mb-3">
+                            <label for="status-filter" class="form-label fw-bold">Filter by Status:</label>
+                            <select id="status-filter" class="form-select" style="max-width: 250px;">
+                                <option value="all">All</option>
+                                <option value="BANNED">Banned</option>
+                                <option value="LIMITED">Limited</option>
+                                <option value="SEMI-LIMITED">Semi-Limited</option>
+                            </select>
+                        </div>
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Image</th>
+                                    <th>Card Name</th>
+                                    <th>Power Level</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="banlist-body">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </article>
+        </main>
+    </div>
+
+    <script src="js/ygoprodeck-client.js"></script>
+    <script src="js/app.js"></script>
+</body>
+
+</html>
