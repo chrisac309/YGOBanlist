@@ -12,7 +12,7 @@ public class YGOProDeckClient(HttpClient httpClient)
         var offset = 0;
         while (offset <= 1000)
         {
-            var deckinfo = await httpClient.GetFromJsonAsync<DeckInfo[]>($"/api/decks/getDecks.php?&_sft_category=tournament%20meta%20decks&from=2022-12-15&to=2023-12-15&limit=20&offset={offset}");
+            var deckinfo = await httpClient.GetFromJsonAsync<DeckInfo[]>($"/api/decks/getDecks.php?&_sft_category=tournament%20meta%20decks&from=2025-03-09&to=2026-03-09&limit=20&offset={offset}");
             foreach (var deck in deckinfo)
             {
                 lastThousandTournamentDecks = lastThousandTournamentDecks.Append(deck);
