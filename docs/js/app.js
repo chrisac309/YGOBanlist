@@ -100,7 +100,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         const filtered = filterValue === "all"
             ? data
-            : data.filter(card => card.status.replace("*", "") === filterValue);
+            : data.filter(card => card.status.replaceAll("*", "") === filterValue);
 
         tbody.innerHTML = "";
 
@@ -152,7 +152,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function getStatusBadgeClass(status) {
-        const base = status.replace("*", "");
+        const base = status.replaceAll("*", "");
         if (base === "BANNED") return "bg-danger";
         if (base === "LIMITED") return "bg-warning text-dark";
         if (base === "SEMI-LIMITED") return "bg-info text-dark";
