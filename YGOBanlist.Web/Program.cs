@@ -3,9 +3,6 @@ using YGOBanlist.Web.Components;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add service defaults & Aspire components.
-builder.AddServiceDefaults();
-
 // Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
@@ -29,7 +26,5 @@ app.UseOutputCache();
 
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
-    
-app.MapDefaultEndpoints();
 
 app.Run();
